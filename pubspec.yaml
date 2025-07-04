@@ -33,12 +33,13 @@ dependencies:
   cloud_firestore: ^5.6.11
   firebase_core: ^3.15.1
   firebase_storage: ^12.4.9
-  image_picker: ^1.1.2
+  image_picker: ^1.0.8
   random_string: ^2.3.1
   cupertino_icons: ^1.0.8
   firebase_auth: ^5.6.2
   google_sign_in: ^7.1.0
   flutter_plugin_android_lifecycle: ^2.0.20
+  shared_preferences: ^2.5.3
 
 dev_dependencies:
   flutter_test:

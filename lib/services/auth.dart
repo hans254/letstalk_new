@@ -1,85 +1,69 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:letstalk_new/services/database.dart';
+import 'package:letstalk_new/services/shared_pref.dart';
 
 class AuthMethods {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseAuth auth = FirebaseAuth.instance;
 
-  // Get the current signed-in user
-  Future<User?> getCurrentUser() async {
-    return _auth.currentUser;
+  getCurrentUser() async {
+    return await auth.currentUser;
   }
 
-  // Sign in with Google
-  Future<User?> signInWithGoogle(BuildContext context) async {
-    try {
-      // Initialize GoogleSignIn with default scopes
-      final GoogleSignIn googleSignIn = GoogleSignIn();
+  signInWithGoogle(BuildContext context) async {
+    final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
+    final GoogleSignIn googleSignIn = GoogleSignIn();
 
-      // Trigger Google sign-in flow
-      final GoogleSignInAccount? googleSignInAccount = await googleSignIn.signIn();
+    final GoogleSignInAccount? googleSignInAccount =
+        await googleSignIn.signIn();
+    final GoogleSignInAuthentication? googleSignInAuthentication =
+        await googleSignInAccount?.authentication;
 
-      if (googleSignInAccount == null) {
-        // User canceled the sign-in
+    final AuthCredential credential = GoogleAuthProvider.credential(
+      idToken: googleSignInAuthentication?.idToken,
+      accessToken: googleSignInAuthentication?.accessToken,
+    );
+
+    UserCredential result = await firebaseAuth.signInWithCredential(credential);
+    User? userDetails = result.user;
+    String username = userDetails!.email!.replaceAll("@gmail.com", "");
+    String firstLetter = username.substring(0, 1).toUpperCase();
+    await SharedPreferenceHelper().saveUserDisplayName(
+      userDetails!.displayName!,
+    );
+    await SharedPreferenceHelper().saveUserEmail(userDetails!.email!);
+    await SharedPreferenceHelper().saveUserId(userDetails.uid);
+    await SharedPreferenceHelper().saveUserName(username);
+    await SharedPreferenceHelper().saveUserImage(userDetails.photoURL!);
+    if (result != null) {
+      Map<String, dynamic> userInfoMap = {
+        "Name": userDetails!.displayName,
+        "Email": userDetails.email,
+        "Image": userDetails.photoURL,
+        "id": userDetails.uid,
+        "username": username.toUpperCase(),
+        "SearchKey": firstLetter,
+      };
+
+      await DatabaseMethods().addUser(userInfoMap, userDetails!.uid).then((
+        value,
+      ) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Google sign-in canceled')),
+          SnackBar(
+            backgroundColor: Colors.green,
+            content: Text(
+              "Registered Successfully",
+              style: TextStyle(
+                fontSize: 22,
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
         );
-        return null;
-      }
-
-      // Obtain Google authentication details
-      final GoogleSignInAuthentication googleAuth = await googleSignInAccount.authentication;
-
-      // Create Firebase credential
-      final AuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      // Sign in to Firebase with the Google credential
-      final UserCredential userCredential = await _auth.signInWithCredential(credential);
-      final User? user = userCredential.user;
-
-      if (user != null) {
-        // Sign-in successful
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Signed in as ${user.displayName}')),
-        );
-        return user;
-      } else {
-        // Unexpected case where user is null
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Google sign-in failed: No user returned')),
-        );
-        return null;
-      }
-    } catch (e) {
-      // Handle specific FirebaseAuth exceptions
-      String errorMessage;
-      if (e is FirebaseAuthException) {
-        switch (e.code) {
-          case 'account-exists-with-different-credential':
-            errorMessage = 'Account exists with a different sign-in method';
-            break;
-          case 'invalid-credential':
-            errorMessage = 'Invalid Google credentials';
-            break;
-          case 'operation-not-allowed':
-            errorMessage = 'Google sign-in is not enabled in Firebase';
-            break;
-          default:
-            errorMessage = 'Google sign-in failed: ${e.message}';
-        }
-      } else {
-        errorMessage = 'An error occurred: $e';
-      }
-
-      // Show error to the user
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMessage)),
-      );
-      print('Google sign-in error: $e');
-      return null;
+      });
     }
   }
 }
