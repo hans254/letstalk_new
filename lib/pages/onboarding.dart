@@ -15,7 +15,7 @@ class _OnboardingState extends State<Onboarding> {
       body: Container(
         child: Column(
           children: [
-            Image.asset("images/onboarding.jpg"),
+            Image.asset("images/onboard.png"),
             SizedBox(height: 20.0),
             Padding(
               padding: const EdgeInsets.only(left: 20.0, right: 20.0),

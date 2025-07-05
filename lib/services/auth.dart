@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:letstalk_new/pages/home.dart';
 import 'package:letstalk_new/services/database.dart';
 import 'package:letstalk_new/services/shared_pref.dart';
 
@@ -47,23 +48,27 @@ class AuthMethods {
         "SearchKey": firstLetter,
       };
 
-      await DatabaseMethods().addUser(userInfoMap, userDetails!.uid).then((
-        value,
-      ) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: Colors.green,
-            content: Text(
-              "Registered Successfully",
-              style: TextStyle(
-                fontSize: 22,
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-              ),
+      await DatabaseMethods().addUser(userInfoMap, userDetails!.uid).then((value) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.green,
+          content: Text(
+            "Registered Successfully",
+            style: TextStyle(
+              fontSize: 22,
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
             ),
           ),
-        );
-      });
+        ),
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => Home()),
+      );
+    });
+
     }
   }
 }
