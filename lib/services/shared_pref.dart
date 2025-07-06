@@ -46,4 +46,14 @@ class SharedPreferenceHelper {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString(userUserNamekey);
   }
+
+  Future<String?> getUserEmail() async{
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString(userUserNamekey);
+  }
+
+  Future<String?> getUserImage() async{
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString(userUserNamekey);
+  }
 }

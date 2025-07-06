@@ -1,4 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:letstalk_new/services/database.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -8,6 +10,59 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  TextEditingController searchcontroller = new TextEditingController();
+  bool search = false;
+
+  var queryResultSet = [];
+  var tempSearchStore = [];
+
+  getChatRoomIdbyUsername(String a, String b) {
+    if (a.substring(0, 1).codeUnitAt(0) > b.substring(0, 1).codeUnitAt(0)) {
+      return '$b\_$a';
+    } else {
+      return '$a\_$b';
+    }
+  }
+
+  void initiateSearch(String value) {
+    if (value.isEmpty) {
+      setState(() {
+        queryResultSet = [];
+        tempSearchStore = [];
+        search = false;
+      });
+      return; // stop further execution
+    }
+
+    setState(() {
+      search = true;
+    });
+
+    String capitalizedValue =
+        value[0].toUpperCase() + value.substring(1); // safe since value isn't empty here
+
+    if (queryResultSet.isEmpty && value.length == 1) {
+      DatabaseMethods().search(value).then((QuerySnapshot docs) {
+        setState(() {
+          for (var doc in docs.docs) {
+            queryResultSet.add(doc.data());
+          }
+        });
+      });
+    } else {
+      tempSearchStore = [];
+      for (var element in queryResultSet) {
+        if (element['username']
+            .toString()
+            .startsWith(capitalizedValue)) {
+          setState(() {
+            tempSearchStore.add(element);
+          });
+        }
+      }
+    }
+  };
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -21,103 +76,173 @@ class _HomeState extends State<Home> {
               padding: const EdgeInsets.only(left: 20.0),
               child: Row(
                 children: [
-                  Image.asset("images/wave.png", height: 40, width: 40, fit: BoxFit.cover,),
-                  SizedBox(width: 10.0,),
-                  Text("Hello,",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 16.0, color: Colors.white, fontWeight: FontWeight.bold)
+                  Image.asset(
+                    "images/wave.png",
+                    height: 40,
+                    width: 40,
+                    fit: BoxFit.cover,
                   ),
-                  SizedBox(width: 10.0,),
-                  Text("Hansel",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 16.0, color: Colors.white, fontWeight: FontWeight.bold)
+                  SizedBox(width: 10.0),
+                  Text(
+                    "Hello,",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16.0,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(width: 10.0),
+                  Text(
+                    "Hansel",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16.0,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   Spacer(),
                   Container(
                     padding: EdgeInsets.all(2.0),
                     margin: EdgeInsets.only(right: 20.0),
-                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10.0)),
-                    child: Icon(Icons.person, color: Color(0xff703eff),size: 30.0,),
-                  )
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    child: Icon(
+                      Icons.person,
+                      color: Color(0xff703eff),
+                      size: 30.0,
+                    ),
+                  ),
                 ],
               ),
             ),
-            SizedBox(height: 10.0,),
+            SizedBox(height: 10.0),
             Padding(
               padding: const EdgeInsets.only(left: 20.0),
-              child: Text("Welcome To",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16.0, color: Color.fromARGB(197, 255,255, 255), fontWeight: FontWeight.bold)
+              child: Text(
+                "Welcome To",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16.0,
+                  color: Color.fromARGB(197, 255, 255, 255),
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             Padding(
               padding: const EdgeInsets.only(left: 20.0),
-              child: Text("letsTalk",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 20.0, color: Colors.white, fontWeight: FontWeight.bold)
+              child: Text(
+                "letsTalk",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 20.0,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-            SizedBox(height: 30.0,),
+            SizedBox(height: 30.0),
             Expanded(
               child: Container(
                 padding: EdgeInsets.only(left: 20.0, right: 20.0),
                 width: MediaQuery.of(context).size.width,
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.only(topLeft: Radius.circular(30), topRight: Radius.circular(30))),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(30),
+                    topRight: Radius.circular(30),
+                  ),
+                ),
                 child: Column(
                   children: [
-                    SizedBox(height: 30.0,),
+                    SizedBox(height: 30.0),
                     Container(
-                      decoration: BoxDecoration(color: Color(0xFFececf8), borderRadius: BorderRadius.circular(10.0)),
+                      decoration: BoxDecoration(
+                        color: Color(0xFFececf8),
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
                       child: TextField(
-                        decoration: InputDecoration(border: InputBorder.none, prefixIcon: Icon(Icons.search),
-                        hintText: "Search Username..."
+                        controller: searchcontroller,
+                        onChanged: (value) {
+                          initiateSearch(value.toUpperCase());
+                        },
+                        decoration: InputDecoration(
+                          border: InputBorder.none,
+                          prefixIcon: Icon(Icons.search),
+                          hintText: "Search Username...",
                         ),
                       ),
                     ),
-                    SizedBox(height: 20.0,),
+                    SizedBox(height: 20.0),
                     Material(
                       elevation: 3.0,
                       borderRadius: BorderRadius.circular(10.0),
                       child: Container(
                         padding: EdgeInsets.all(5.0),
-                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10.0)),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
                         width: MediaQuery.of(context).size.width,
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             ClipRRect(
                               borderRadius: BorderRadius.circular(60.0),
-                              child: Image.asset("images/boy.jpeg", height: 50, width: 50, fit: BoxFit.cover,)
+                              child: Image.asset(
+                                "images/boy.jpeg",
+                                height: 50,
+                                width: 50,
+                                fit: BoxFit.cover,
+                              ),
                             ),
-                            SizedBox(width: 5.0,),
+                            SizedBox(width: 5.0),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                SizedBox(height: 5.0,),
-                                Text("Tevin",
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(fontSize: 18.0, color: Colors.black, fontWeight: FontWeight.w500)
+                                SizedBox(height: 5.0),
+                                Text(
+                                  "Tevin",
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 18.0,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
-                                Text("Hello, How are you doing?",
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(fontSize: 12.0, color: Colors.black45, fontWeight: FontWeight.w500)
+                                Text(
+                                  "Hello, How are you doing?",
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 12.0,
+                                    color: Colors.black45,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                               ],
                             ),
                             Spacer(),
-                            Text("2:30 pm",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: 10.0, color: Colors.black, fontWeight: FontWeight.w500)
+                            Text(
+                              "2:30 pm",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 10.0,
+                                color: Colors.black,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                    )
+                    ),
                   ],
                 ),
               ),
-            )
+            ),
           ],
         ),
       ),
